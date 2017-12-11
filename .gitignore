@@ -1,0 +1,4 @@
+*.json
+.coverage
+.credentials/
+__pycache__/
