@@ -107,8 +107,8 @@ class clicrdv():
 
     def get_calendar_entries(self):
         """
-        Creates a Google Calendar API service object and outputs the number of
-        events on the user's calendar.
+        Creates a Google Calendar API service and query new calendar entries
+        as of today.
         """
         owner = 'psy78.nathaliebouchard@gmail.com'
         credentials = get_credentials('calendar')
@@ -116,10 +116,8 @@ class clicrdv():
         service = discovery.build('calendar', 'v3', http=http)
 
         now = datetime.datetime.utcnow().isoformat() + 'Z'
-        print('Getting the events count since %s' % now)
         eventsResult = service.events().list(
             calendarId='primary', timeMin=now, singleEvents=False,
-            # maxResults = 2400, orderBy='startTime').execute()
             maxResults=2400).execute()
         events = eventsResult.get('items', [])
 
@@ -144,9 +142,7 @@ class clicrdv():
                     self.rv['client'] = self.client_by_email[email]
             except KeyError:
                 pass
-            print(self.rv)
             self.agenda += [self.rv]
-        print('self.agenda : %s' % len(self.agenda))
 
 
 def main():
