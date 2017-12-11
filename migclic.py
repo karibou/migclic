@@ -84,30 +84,33 @@ class clicrdv():
             CGroups = [c['contactGroupMembership']['contactGroupId'] for c in
                        contact['memberships']]
             if CGroupId in CGroups:
-                self.client[contact['names'][0]['displayNameLastFirst']] = {}
+                cname = contact['names'][0]
+                nindex = cname['displayNameLastFirst']
+                self.client[nindex] = {}
                 try:
-                    self.client[contact['names'][0]['displayNameLastFirst']]['nom'] = contact['names'][0]['familyName']
+                    self.client[nindex]['nom'] = cname['familyName']
                 except KeyError:
-                    self.client[contact['names'][0]['displayNameLastFirst']]['nom'] = contact['names'][0]['givenName']
+                    self.client[nindex]['nom'] = cname['givenName']
                 try:
-                    self.client[contact['names'][0]['displayNameLastFirst']]['prenom'] = contact['names'][0]['givenName']
+                    self.client[nindex]['prenom'] = cname['givenName']
                 except KeyError:
-                    self.client[contact['names'][0]['displayNameLastFirst']]['prenom'] = contact['names'][0]['displayName']
+                    self.client[nindex]['prenom'] = cname['displayName']
                 phone = contact['phoneNumbers'][0]['canonicalForm']
                 if phone.startswith('+336') or phone.startswith('+337'):
-                    self.client[contact['names'][0]['displayNameLastFirst']]['mobile'] = phone
+                    self.client[nindex]['mobile'] = phone
                 else:
-                    self.client[contact['names'][0]['displayNameLastFirst']]['fixe'] = phone
+                    self.client[nindex]['fixe'] = phone
                 if 'emailAddresses' in contact.keys():
                     email = contact['emailAddresses'][0]['value']
-                    self.client[contact['names'][0]['displayNameLastFirst']]['email'] = email
-                    self.client_by_email[email] = self.client[contact['names'][0]['displayNameLastFirst']]
+                    self.client[nindex]['email'] = email
+                    self.client_by_email[email] = self.client[nindex]
 
     def get_calendar_entries(self):
         """
         Creates a Google Calendar API service object and outputs the number of
         events on the user's calendar.
         """
+        owner = 'psy78.nathaliebouchard@gmail.com'
         credentials = get_credentials('calendar')
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('calendar', 'v3', http=http)
@@ -128,12 +131,14 @@ class clicrdv():
             if event['status'] == 'cancelled':
                 continue
             self.rv['etag'] = event['etag']
-            self.rv['start'] = event['start'].get('dateTime', event['start'].get('date'))
-            self.rv['end'] = event['end'].get('dateTime', event['end'].get('date'))
+            self.rv['start'] = event['start'].get('dateTime',
+                                                  event['start'].get('date'))
+            self.rv['end'] = event['end'].get('dateTime',
+                                              event['end'].get('date'))
             self.rv['summary'] = event['summary']
             try:
                 email = ''.join([e['email'] for e in event['attendees']
-                                 if e['email'] != 'psy78.nathaliebouchard@gmail.com'])
+                                 if e['email'] != owner])
                 self.rv['email'] = email
                 if email in self.client_by_email.keys():
                     self.rv['client'] = self.client_by_email[email]
