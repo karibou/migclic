@@ -3,8 +3,10 @@
 import httplib2
 import os
 import datetime
+import requests
 import hashlib
 import getpass
+import argparse
 
 from apiclient import discovery
 from oauth2client import client
@@ -23,6 +25,16 @@ SECRET_FILE = {
     }
 APPLICATION_NAME = 'Google Calendar API Python'
 
+api = {
+        'sandbox': {
+            'baseurl': 'https://sandbox.clicrdv.com/api/v1',
+            'apikey': '',
+            },
+        'prod': {
+            'baseurl': 'https://www.clicrdv.com/api/v1',
+            'apikey': '',
+            },
+        }
 
 def get_credentials(target):
     """Gets valid user credentials from storage.
@@ -68,6 +80,41 @@ def get_creds():
     return {'user': username, 'pwd': hashpwd, 'apikey': apikey}
 
 class clicrdv():
+    def __init__(self, inst):
+        self.inst = inst
+
+    def session_open(self, clic_auth):
+        '''
+        Open session to clicrdv API
+        '''
+        payload = {
+                'apikey': clic_auth['apikey'],
+                'pro[email]': clic_auth['user'],
+                'pro[password]': clic_auth['pwd'],
+                }
+        self.ses = requests.session()
+        resp = self.ses.post(api[self.inst]['baseurl'] +
+                             '/sessions/login.json?apikey=' +
+                             api[self.inst]['apikey'], data=payload)
+        if resp.status_code != 200:
+            print('Unable to establish session %d : %s - %s' %
+                  (resp.status_code, resp.reason, resp.text))
+            self.ses = None
+            return
+        print(resp.text)
+        self.group_id = str(resp.json()['pro']['group_id'])
+        return
+
+    def get_fiches(self):
+
+        resp = self.ses.get(api[self.inst]['baseurl'] +
+                             '/groups/' + self.group_id + '/fiches.json')
+        if resp.status_code != 200:
+            print('Unable to get all fiches %d : %s - %s' %
+                  (resp.status_code, resp.reason, resp.text))
+            return
+        self.all_fiches = resp.json()
+        return
 
     def get_contacts(self):
         """
@@ -163,7 +210,23 @@ class clicrdv():
 
 
 def main():
-    clic = clicrdv()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--force', action='store_true',
+                        help='Force use of the production API')
+    args = parser.parse_args()
+    clic_instance = 'sandbox'
+    auth = get_creds()
+
+    if args.force:
+        try:
+            ans = input('You really want to use the production instance ??? ')
+        except KeyboardInterrupt:
+            return
+        if ans[0].lower() == 'y' or ans[0].lower() == 'o':
+            clic_instance = 'prod'
+    api[clic_instance]['apikey'] = auth['apikey']
+
+    clic = clicrdv(clic_instance)
     clic.get_contacts()
     clic.get_calendar_entries()
     print('### Sommaire ###')
@@ -173,6 +236,11 @@ def main():
     has_client = [clnt['email'] for clnt in clic.agenda
                   if 'client' in clnt.keys()]
     print('Nombre de rendez-vous avec client lié : %d' % len(has_client))
+
+    print('Opening session to %s ...' % clic_instance)
+    clic.session_open(auth)
+    if clic.ses is not None:
+        clic.get_fiches()
 
 
 if __name__ == '__main__':
