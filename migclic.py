@@ -149,6 +149,13 @@ def main():
     clic = clicrdv()
     clic.get_contacts()
     clic.get_calendar_entries()
+    print('### Sommaire ###')
+    print('Nombre de clients total               : %d' % len(clic.client))
+    print('Nombre de clients avec email          : %d' % len(clic.client_by_email))
+    print('Nombre de rendez-vous                 : %d' % len(clic.agenda))
+    has_client = [clnt['email'] for clnt in clic.agenda
+                  if 'client' in clnt.keys()]
+    print('Nombre de rendez-vous avec client lié : %d' % len(has_client))
 
 
 if __name__ == '__main__':
