@@ -3,12 +3,13 @@
 import httplib2
 import os
 import datetime
+import hashlib
+import getpass
 
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
-
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
@@ -49,6 +50,22 @@ def get_credentials(target):
         print('Storing credentials to ' + credential_path)
     return credentials
 
+def get_creds():
+    '''
+    Get username/password pair and API key either from env variable
+    or from the keyboard
+    '''
+    username = os.environ.get('user')
+    pwd = os.environ.get('pwd')
+    apikey = os.environ.get('apikey')
+    if not username:
+        username = input('Username: ')
+    if not pwd:
+        pwd = getpass.getpass('Password: ')
+    hashpwd = hashlib.sha1(pwd.encode('utf-8')).hexdigest()
+    if not apikey:
+        apikey = input('API Key: ')
+    return {'user': username, 'pwd': hashpwd, 'apikey': apikey}
 
 class clicrdv():
 
