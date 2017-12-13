@@ -210,4 +210,5 @@ class MigClicTests(unittest.TestCase):
         has_client = [clnt['email'] for clnt in clic.agenda
                       if 'client' in clnt.keys()]
         self.assertEquals(len(clic.agenda), 2)
+        self.assertEquals(len(clic.client_by_email), 1)
         self.assertEquals(has_client, ['luke.skywalker@tatoine.org'])
