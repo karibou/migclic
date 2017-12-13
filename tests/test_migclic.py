@@ -186,7 +186,7 @@ class MigClicTests(unittest.TestCase):
             execute.return_value = self.cgresult
         build.return_value.people.return_value.connections.return_value.\
             list.return_value.execute.return_value = self.ctcresult
-        clic = migclic.clicrdv()
+        clic = migclic.clicrdv('test')
         clic.get_contacts()
         self.assertEquals(len(clic.client), 3)
         self.assertEquals(len(clic.client_by_email), 1)
@@ -204,7 +204,7 @@ class MigClicTests(unittest.TestCase):
             list.return_value.execute.return_value = self.ctcresult
         build.return_value.events.return_value.list.return_value.\
             execute.return_value = self.calresult
-        clic = migclic.clicrdv()
+        clic = migclic.clicrdv('test')
         clic.get_contacts()
         clic.get_calendar_entries()
         has_client = [clnt['email'] for clnt in clic.agenda
