@@ -36,7 +36,7 @@ api = {
             },
         }
 
-def get_credentials(target):
+def get_google_credentials(target):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -62,7 +62,7 @@ def get_credentials(target):
         print('Storing credentials to ' + credential_path)
     return credentials
 
-def get_creds():
+def get_clicrdv_creds():
     '''
     Get username/password pair and API key either from env variable
     or from the keyboard
@@ -121,7 +121,7 @@ class clicrdv():
         Creates a Google Calendar API service object and query all contact
         data
         """
-        credentials = get_credentials('contacts')
+        credentials = get_google_credentials('contacts')
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('people', 'v1', http=http)
 
@@ -175,7 +175,7 @@ class clicrdv():
         as of today.
         """
         owner = 'psy78.nathaliebouchard@gmail.com'
-        credentials = get_credentials('calendar')
+        credentials = get_google_credentials('calendar')
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('calendar', 'v3', http=http)
 
@@ -215,7 +215,7 @@ def main():
                         help='Force use of the production API')
     args = parser.parse_args()
     clic_instance = 'sandbox'
-    auth = get_creds()
+    auth = get_clicrdv_creds()
 
     if args.force:
         try:
