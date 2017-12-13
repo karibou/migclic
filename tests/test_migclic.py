@@ -111,14 +111,15 @@ class MigClicTests(unittest.TestCase):
     @patch('migclic.Storage.get')
     @patch('migclic.client.flow_from_clientsecrets')
     @patch('migclic.tools.run_flow')
-    def test_get_credentials_new(self, tools, client, store, mdir, ospath):
+    def test_get_google_credentials_new(self, tools, client, store, mdir,
+                                        ospath):
         '''
-        Test credential creation when no ./credentials directory exists
+        Test Google credential creation when no ./credentials directory exists
         '''
         ospath.return_value = self.workdir + './credentials'
         store.return_value = None
 
-        creds = migclic.get_credentials('contacts')
+        creds = migclic.get_google_credentials('contacts')
         self.assertIsInstance(creds, MagicMock)
         mdir.assert_called_once_with(self.workdir + './credentials')
         store.assert_called_once()
@@ -133,16 +134,16 @@ class MigClicTests(unittest.TestCase):
     @patch('migclic.Storage.get')
     @patch('migclic.client.flow_from_clientsecrets')
     @patch('migclic.tools.run_flow')
-    def test_get_credentials_exists(self, tools, client, store, mdir, exists,
-                                    ospath):
+    def test_get_google_credentials_exists(self, tools, client, store, mdir,
+                                           exists, ospath):
         '''
-        Test credential creation when ./credentials directory exists
+        Test Google credential creation when ./credentials directory exists
         '''
         ospath.return_value = self.workdir + './credentials'
         exists.return_value = True
         store.return_value = None
 
-        creds = migclic.get_credentials('contacts')
+        creds = migclic.get_google_credentials('contacts')
         self.assertIsInstance(creds, MagicMock)
         mdir.assert_not_called()
         store.assert_called_once()
@@ -155,10 +156,11 @@ class MigClicTests(unittest.TestCase):
     @patch('migclic.Storage.get')
     @patch('migclic.client.flow_from_clientsecrets')
     @patch('migclic.tools.run_flow')
-    def test_get_credentials_invalid(self, tools, client, store, mdir, exists,
-                                     ospath):
+    def test_get_google_credentials_invalid(self, tools, client, store, mdir,
+                                            exists, ospath):
         '''
-        Test credential creation query when existing credential is invalid
+        Test google credential creation query when existing credential
+        is invalid
         '''
         ospath.return_value = self.workdir + './credentials'
         exists.return_value = True
@@ -166,7 +168,7 @@ class MigClicTests(unittest.TestCase):
         store_cred.invalid = True
         store.return_value = store_cred
 
-        creds = migclic.get_credentials('contacts')
+        creds = migclic.get_google_credentials('contacts')
         self.assertIsInstance(creds, MagicMock)
         mdir.assert_not_called()
         store.assert_called_once()
@@ -174,7 +176,7 @@ class MigClicTests(unittest.TestCase):
         tools.assert_called_once()
 
     @patch('migclic.discovery.build')
-    @patch('migclic.get_credentials')
+    @patch('migclic.get_google_credentials')
     def test_get_contacts(self, cred, build):
         '''
         Test contact retrieval
@@ -190,7 +192,7 @@ class MigClicTests(unittest.TestCase):
         self.assertEquals(len(clic.client_by_email), 1)
 
     @patch('migclic.discovery.build')
-    @patch('migclic.get_credentials')
+    @patch('migclic.get_google_credentials')
     def test_get_calendar(self, cred, build):
         '''
         Test calendar retrieval
