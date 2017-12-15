@@ -212,3 +212,130 @@ class MigClicTests(unittest.TestCase):
         self.assertEquals(len(clic.agenda), 2)
         self.assertEquals(len(clic.client_by_email), 1)
         self.assertEquals(has_client, ['luke.skywalker@tatoine.org'])
+
+    @patch('migclic.os.environ.get')
+    def test_get_clicrdv_creds_with_env_vars(self, envget):
+
+        envget.side_effect = ['darth vader', 'father', 'deathstar']
+        creds = migclic.get_clicrdv_creds()
+        self.assertEquals(creds['user'], 'darth vader')
+        self.assertEquals(creds['pwd'],
+                          '32c8bbff09c356265a96fb8385cfa141c9d92f76')
+        self.assertEquals(creds['apikey'], 'deathstar')
+
+    @patch('builtins.input')
+    @patch('migclic.getpass.getpass')
+    @patch('migclic.os.environ.get')
+    def test_get_clicrdv_creds_with_prompt(self, envget, gpass, prompt):
+
+        envget.side_effect = [None, None, None]
+        prompt.side_effect = ['darth vader', 'deathstar']
+        gpass.return_value = 'father'
+        creds = migclic.get_clicrdv_creds()
+        self.assertEquals(creds['user'], 'darth vader')
+        self.assertEquals(creds['pwd'],
+                          '32c8bbff09c356265a96fb8385cfa141c9d92f76')
+        self.assertEquals(creds['apikey'], 'deathstar')
+
+    @patch('migclic.requests.session')
+    def test_session_open_resp_invalid(self, sess):
+        '''
+        Test session_open with invalid return code
+        '''
+
+        session = MagicMock()
+        session.status_code = 404
+        session.reason = 'Not found'
+        session.text = '404 - Not Found'
+        auth = {
+                'user': 'darth',
+                'pwd': 'vader',
+                'apikey': 'deathstar',
+                }
+        sess.return_value.post.return_value = session
+        clic = migclic.clicrdv('prod')
+        clic.session_open(auth)
+        self.assertIsNone(clic.ses)
+        self.assertIsNone(clic.group_id)
+
+    @patch('migclic.requests.session')
+    def test_session_open_resp_ok(self, sess):
+        '''
+        Test session_open with valid return code
+        '''
+
+        session = MagicMock()
+        session.status_code = 200
+        auth = {
+                'user': 'darth',
+                'pwd': 'vader',
+                'apikey': 'deathstar',
+                }
+        json_return = {
+                'pro': {
+                    'group_id': 'deadbeef',
+                    },
+                }
+        sess.return_value.post.return_value = session
+        sess.return_value.post.return_value.json.return_value = json_return
+        clic = migclic.clicrdv('prod')
+        clic.session_open(auth)
+        self.assertIsNotNone(clic.ses)
+        self.assertEquals(clic.group_id, 'deadbeef')
+
+    @patch('migclic.requests.session')
+    def test_get_fiches(self, sess):
+        '''
+        Test fiche retrieval
+        '''
+
+        session = MagicMock()
+        session.status_code = 200
+        auth = {
+                'user': 'darth',
+                'pwd': 'vader',
+                'apikey': 'deathstar',
+                }
+        json_return = {
+                'pro': {
+                    'group_id': 'deadbeef',
+                    },
+                }
+        sess.return_value.post.return_value = session
+        sess.return_value.post.return_value.json.return_value = json_return
+        sess.return_value.get.return_value = session
+        sess.return_value.get.return_value.json.return_value = json_return
+        clic = migclic.clicrdv('prod')
+        clic.session_open(auth)
+        clic.get_fiches()
+        self.assertIsNotNone(clic.ses)
+        self.assertEquals(clic.all_fiches, json_return)
+
+    @patch('migclic.requests.session')
+    def test_get_fiches_nok(self, sess):
+        '''
+        Test fiche retrieval
+        '''
+
+        session = MagicMock()
+        session.status_code = 200
+        auth = {
+                'user': 'darth',
+                'pwd': 'vader',
+                'apikey': 'deathstar',
+                }
+        json_return = {
+                'pro': {
+                    'group_id': 'deadbeef',
+                    },
+                }
+        sess.return_value.post.return_value = session
+        sess.return_value.post.return_value.json.return_value = json_return
+        sess.return_value.get.return_value = session
+        sess.return_value.get.return_value.json.return_value = json_return
+        clic = migclic.clicrdv('prod')
+        clic.session_open(auth)
+        session.status_code = 404
+        clic.get_fiches()
+        self.assertIsNotNone(clic.ses)
+        self.assertIsNone(clic.all_fiches)
