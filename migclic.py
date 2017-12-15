@@ -36,6 +36,7 @@ api = {
             },
         }
 
+
 def get_google_credentials(target):
     """Gets valid user credentials from storage.
 
@@ -62,6 +63,7 @@ def get_google_credentials(target):
         print('Storing credentials to ' + credential_path)
     return credentials
 
+
 def get_clicrdv_creds():
     '''
     Get username/password pair and API key either from env variable
@@ -78,6 +80,7 @@ def get_clicrdv_creds():
     if not apikey:
         apikey = input('API Key: ')
     return {'user': username, 'pwd': hashpwd, 'apikey': apikey}
+
 
 class clicrdv():
     def __init__(self, inst):
@@ -100,6 +103,7 @@ class clicrdv():
             print('Unable to establish session %d : %s - %s' %
                   (resp.status_code, resp.reason, resp.text))
             self.ses = None
+            self.group_id = None
             return
         print(resp.text)
         self.group_id = str(resp.json()['pro']['group_id'])
@@ -108,10 +112,11 @@ class clicrdv():
     def get_fiches(self):
 
         resp = self.ses.get(api[self.inst]['baseurl'] +
-                             '/groups/' + self.group_id + '/fiches.json')
+                            '/groups/' + self.group_id + '/fiches.json')
         if resp.status_code != 200:
             print('Unable to get all fiches %d : %s - %s' %
                   (resp.status_code, resp.reason, resp.text))
+            self.all_fiches = None
             return
         self.all_fiches = resp.json()
         return
@@ -231,7 +236,8 @@ def main():
     clic.get_calendar_entries()
     print('### Sommaire ###')
     print('Nombre de clients total               : %d' % len(clic.client))
-    print('Nombre de clients avec email          : %d' % len(clic.client_by_email))
+    print('Nombre de clients avec email          : %d' %
+          len(clic.client_by_email))
     print('Nombre de rendez-vous                 : %d' % len(clic.agenda))
     has_client = [clnt['email'] for clnt in clic.agenda
                   if 'client' in clnt.keys()]
