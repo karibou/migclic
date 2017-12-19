@@ -2,6 +2,7 @@ import unittest
 import migclic
 import tempfile
 import shutil
+import argparse
 from unittest.mock import patch, MagicMock
 
 
@@ -13,6 +14,16 @@ class MigClicTests(unittest.TestCase):
                 'user': 'darth',
                 'pwd': 'vader',
                 'apikey': 'deathstar',
+                }
+        self.args = argparse.Namespace()
+        self.stats = {
+                'existing_contacts': 1,
+                'existing_contacts_with_email': 2,
+                'found_agenda_entries': 3,
+                'existing_fiches': 4,
+                'found_contacts_in_fiches': 5,
+                'newly_created_fiches': 6,
+                'all_fiches': 7,
                 }
         self.cgresult = {
             'contactGroups': [{
@@ -452,3 +463,74 @@ class MigClicTests(unittest.TestCase):
         self.assertEquals(new_fiche['firstphone'], '01 01 01 01 01')
         self.assertEquals(new_fiche['email'], 'luke.skywalker@tatooine.org')
         self.assertFalse(new_fiche['from_web'])
+
+    @patch('migclic.clicrdv.create_all_fiches')
+    @patch('migclic.clicrdv.get_fiches')
+    @patch('migclic.requests.session')
+    @patch('migclic.clicrdv.get_calendar_entries')
+    @patch('migclic.clicrdv.get_contacts')
+    @patch('builtins.print')
+    @patch('builtins.input')
+    @patch('migclic.argparse.ArgumentParser.parse_args')
+    @patch('migclic.get_clicrdv_creds')
+    def test_main_with_force(self, getcreds, args, question, prnt, getcontacts,
+                             getcalendar, sess, fiches, allfiches):
+        '''
+        Test main logic with -f option
+        '''
+
+        getcreds.return_value = self.auth
+        self.args.force = True
+        self.args.Create = False
+        args.return_value = self.args
+        question.return_value = 'y'
+        session = MagicMock()
+        session.status_code = 200
+        json_return = {
+                'pro': {
+                    'group_id': 'deadbeef',
+                    },
+                }
+        sess.return_value.post.return_value = session
+        sess.return_value.post.return_value.json.return_value = json_return
+
+        migclic.main()
+        getcreds.assert_called_once()
+        question.assert_called_once()
+        fiches.assert_called_once_with()
+        allfiches.assert_called_once()
+
+    @patch('migclic.clicrdv.create_all_fiches')
+    @patch('migclic.clicrdv.get_fiches')
+    @patch('migclic.requests.session')
+    @patch('migclic.clicrdv.get_calendar_entries')
+    @patch('migclic.clicrdv.get_contacts')
+    @patch('builtins.print')
+    @patch('builtins.input')
+    @patch('migclic.argparse.ArgumentParser.parse_args')
+    @patch('migclic.get_clicrdv_creds')
+    def test_main_no_force(self, getcreds, args, question, prnt, getcontacts,
+                           getcalendar, sess, fiches, allfiches):
+        '''
+        Test main logic without -f option
+        '''
+
+        getcreds.return_value = self.auth
+        self.args.force = False
+        self.args.Create = False
+        args.return_value = self.args
+        session = MagicMock()
+        session.status_code = 200
+        json_return = {
+                'pro': {
+                    'group_id': 'deadbeef',
+                    },
+                }
+        sess.return_value.post.return_value = session
+        sess.return_value.post.return_value.json.return_value = json_return
+
+        migclic.main()
+        getcreds.assert_called_once()
+        question.assert_not_called()
+        fiches.assert_called_once_with()
+        allfiches.assert_called_once()
