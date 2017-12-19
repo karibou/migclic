@@ -84,9 +84,18 @@ def get_clicrdv_creds():
 
 class clicrdv():
     def __init__(self, inst):
+        self.ses = None
         self.inst = inst
         self.all_fiches = {}
-        self.stats = {}
+        self.stats = {
+                'existing_contacts': 0,
+                'existing_contacts_with_email': 0,
+                'found_agenda_entries': 0,
+                'existing_fiches': 0,
+                'found_contacts_in_fiches': 0,
+                'newly_created_fiches': 0,
+                'all_fiches': 0,
+                }
         self.create_new_fiche = False
 
     def _fiche_exists(self, contact):
@@ -225,8 +234,6 @@ class clicrdv():
         #     }
         # }
 
-        self.stats['found_contacts_in_fiches'] = 0
-        self.stats['newly_created_fiches'] = 0
         for name, contact in self.contact.items():
             if self._fiche_exists(contact):
                 self.stats['found_contacts_in_fiches'] += 1
