@@ -283,6 +283,7 @@ class clicrdv():
             except KeyError:
                 pass
             self.agenda += [self.rv]
+        self.stats['found_agenda_entries'] = len(self.agenda)
 
 
 def main():
