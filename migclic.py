@@ -306,20 +306,31 @@ def main():
     clic = clicrdv(clic_instance)
     clic.get_contacts()
     clic.get_calendar_entries()
-    print('### Sommaire ###')
-    print('Nombre de clients total               : %d' % len(clic.client))
-    print('Nombre de clients avec email          : %d' %
-          len(clic.client_by_email))
-    print('Nombre de rendez-vous                 : %d' % len(clic.agenda))
-    has_client = [clnt['email'] for clnt in clic.agenda
-                  if 'client' in clnt.keys()]
-    print('Nombre de rendez-vous avec client lié : %d' % len(has_client))
 
     print('Opening session to %s ...' % clic_instance)
     clic.session_open(auth)
     if clic.ses is not None:
         clic.get_fiches()
         clic.create_all_fiches()
+        print('### Sommaire ###')
+        print('Nombre total de clients google              : %d' %
+              clic.stats['existing_contacts'])
+        print('Nombre total de clients google avec email   : %d' %
+              clic.stats['existing_contacts_with_email'])
+        print('Nombre de rendez-vous                       : %d' %
+              clic.stats['found_agenda_entries'])
+        has_client = [clnt['email'] for clnt in clic.agenda
+                      if 'client' in clnt.keys()]
+        print('Nombre de rendez-vous google avec client lié: %d' %
+              len(has_client))
+        print('Nombre de fiches clicrdv déjà existantes    : %d' %
+              clic.stats['existing_fiches'])
+        print('Nombre de contact trouvés dans les fiches   : %d' %
+              clic.stats['found_contacts_in_fiches'])
+        print('Nombre de nouvelles fiches clicrdv crées    : %d' %
+              clic.stats['newly_created_fiches'])
+        print('Nombre total de fiches clicrdv              : %d' %
+              clic.stats['all_fiches'])
 
 
 if __name__ == '__main__':
