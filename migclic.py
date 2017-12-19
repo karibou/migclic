@@ -116,7 +116,6 @@ class clicrdv():
             self.ses = None
             self.group_id = None
             return
-        print(resp.text)
         self.group_id = str(resp.json()['pro']['group_id'])
         return
 
