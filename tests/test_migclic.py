@@ -18,6 +18,10 @@ class MigClicTests(unittest.TestCase):
                 'name': 'Client',
                 }, {'name': '0xdeadbeef'}]
             }
+        self.contact = {
+                'nom': 'skywalker',
+                'prenom': 'luke',
+                }
         self.calresult = {
             'items': [{
                 'status': 'cancelled',
@@ -346,3 +350,120 @@ class MigClicTests(unittest.TestCase):
         clic.get_fiches()
         self.assertIsNotNone(clic.ses)
         self.assertIsNone(clic.all_fiches)
+
+    def test_fiche_exists_exist(self):
+        '''
+        Test _fiche_exists if the contact exists
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.all_fiches = {'skywalker, luke': 'one entry'}
+        ret = clic._fiche_exists(self.contact)
+        self.assertTrue(ret)
+
+    def test_fiche_exists_does_not_exist(self):
+        '''
+        Test _fiche_exists if the contact does not exists
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.all_fiches = {'skywalker, luke': 'one entry'}
+        ret = clic._fiche_exists({'nom': 'organa', 'prenom': 'leia'})
+        self.assertFalse(ret)
+
+    def test_create_all_fiches_fiche_exists(self):
+        '''
+        Verify that no new fiche is created if it already exists
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.contact = {
+                'skywalker, luke': {
+                    'nom': 'skywalker',
+                    'prenom': 'luke',
+                    }
+                }
+        clic.all_fiches = {'skywalker, luke': 'one entry'}
+        clic.create_all_fiches()
+        self.assertEquals(clic.stats['newly_created_fiches'], 0)
+        self.assertEquals(clic.stats['found_contacts_in_fiches'], 1)
+
+    @patch('migclic.clicrdv.send_fiche_to_instance')
+    def test_create_all_fiches_new_fiche_with_all_fields(self, send_fiche):
+        '''
+        Verify that a new fiche is created if none exists
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.group_id = 'deadbeef'
+        clic.contact = {
+                'skywalker, luke': {
+                    'nom': 'skywalker',
+                    'prenom': 'luke',
+                    'mobile': '06 01 01 01 01',
+                    'email': 'luke.skywalker@tatooine.org',
+                    }
+                }
+        clic.create_all_fiches()
+        self.assertEquals(clic.stats['newly_created_fiches'], 1)
+        self.assertEquals(clic.stats['found_contacts_in_fiches'], 0)
+        new_fiche = clic.all_fiches['skywalker, luke']
+        self.assertEquals(new_fiche['group_id'], 'deadbeef')
+        self.assertEquals(new_fiche['firstname'], 'luke')
+        self.assertEquals(new_fiche['lastname'], 'skywalker')
+        self.assertEquals(new_fiche['firstphone'], '06 01 01 01 01')
+        self.assertEquals(new_fiche['email'], 'luke.skywalker@tatooine.org')
+        self.assertFalse(new_fiche['from_web'])
+
+    @patch('migclic.clicrdv.send_fiche_to_instance')
+    def test_create_all_fiches_new_fiche_no_email(self, send_fiche):
+        '''
+        Verify that a new fiche is created if none exists and has no email
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.group_id = 'deadbeef'
+        clic.contact = {
+                'skywalker, luke': {
+                    'nom': 'skywalker',
+                    'prenom': 'luke',
+                    'mobile': '06 01 01 01 01',
+                    }
+                }
+        clic.create_all_fiches()
+        self.assertEquals(clic.stats['newly_created_fiches'], 1)
+        self.assertEquals(clic.stats['found_contacts_in_fiches'], 0)
+        new_fiche = clic.all_fiches['skywalker, luke']
+        self.assertEquals(new_fiche['group_id'], 'deadbeef')
+        self.assertEquals(new_fiche['firstname'], 'luke')
+        self.assertEquals(new_fiche['lastname'], 'skywalker')
+        self.assertEquals(new_fiche['firstphone'], '06 01 01 01 01')
+        self.assertEquals(new_fiche['email'], '')
+        self.assertFalse(new_fiche['from_web'])
+
+    @patch('migclic.clicrdv.send_fiche_to_instance')
+    def test_create_all_fiches_new_fiche_no_mobile(self, send_fiche):
+        '''
+        Verify that a new fiche is created if none exists and has no mobile
+        '''
+
+        clic = migclic.clicrdv('prod')
+        clic.group_id = 'deadbeef'
+        clic.contact = {
+                'skywalker, luke': {
+                    'nom': 'skywalker',
+                    'prenom': 'luke',
+                    'fixe': '01 01 01 01 01',
+                    'email': 'luke.skywalker@tatooine.org',
+                    }
+                }
+        clic.create_all_fiches()
+        self.assertEquals(clic.stats['newly_created_fiches'], 1)
+        self.assertEquals(clic.stats['found_contacts_in_fiches'], 0)
+        new_fiche = clic.all_fiches['skywalker, luke']
+        self.assertEquals(new_fiche['group_id'], 'deadbeef')
+        self.assertEquals(new_fiche['firstname'], 'luke')
+        self.assertEquals(new_fiche['lastname'], 'skywalker')
+        self.assertEquals(new_fiche['firstphone'], '01 01 01 01 01')
+        self.assertEquals(new_fiche['email'], 'luke.skywalker@tatooine.org')
+        self.assertFalse(new_fiche['from_web'])

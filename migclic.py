@@ -85,6 +85,17 @@ def get_clicrdv_creds():
 class clicrdv():
     def __init__(self, inst):
         self.inst = inst
+        self.all_fiches = {}
+        self.stats = {}
+        self.create_new_fiche = False
+
+    def _fiche_exists(self, contact):
+
+        if contact['nom'].lower() + ', ' + \
+           contact['prenom'].lower() in self.all_fiches.keys():
+            return True
+        else:
+            return False
 
     def session_open(self, clic_auth):
         '''
@@ -181,6 +192,60 @@ class clicrdv():
         self.stats['existing_contacts'] = len(self.contact)
         self.stats['existing_contacts_with_email'] = len(self.contact_by_email)
 
+    def create_all_fiches(self):
+        # {
+        #   'fiche': {
+        #     'group_id':
+        #     'firstname':
+        #     'lastname':
+        #     'firstphone':
+        #     'email':
+        #     'from_web': False
+        #     }
+        # }
+
+        self.stats['found_contacts_in_fiches'] = 0
+        self.stats['newly_created_fiches'] = 0
+        for name, contact in self.contact.items():
+            if self._fiche_exists(contact):
+                self.stats['found_contacts_in_fiches'] += 1
+                continue
+            new_fiche = {
+                         'group_id': self.group_id,
+                         'firstname': contact['prenom'],
+                         'lastname': contact['nom'],
+                         'from_web': False,
+                        }
+            try:
+                new_fiche.update({
+                             'firstphone': contact['mobile'],
+                             'email': contact['email'],
+                            })
+            except KeyError:
+                if 'email' not in contact.keys():
+                    new_fiche.update({
+                                 'email': '',
+                                })
+                else:
+                    new_fiche.update({
+                                 'email': contact['email'],
+                                })
+
+                if 'mobile' not in contact.keys():
+                    new_fiche.update({
+                                 'firstphone': contact['fixe'],
+                                })
+                else:
+                    new_fiche.update({
+                                 'firstphone': contact['mobile'],
+                                })
+
+            self.send_fiche_to_instance(new_fiche)
+            self.all_fiches[contact['nom'].lower() + ', ' +
+                            contact['prenom'].lower()] = new_fiche
+            self.stats['newly_created_fiches'] += 1
+        self.stats['all_fiches'] = len(self.all_fiches)
+
     def get_calendar_entries(self):
         """
         Creates a Google Calendar API service and query new calendar entries
@@ -254,6 +319,7 @@ def main():
     clic.session_open(auth)
     if clic.ses is not None:
         clic.get_fiches()
+        clic.create_all_fiches()
 
 
 if __name__ == '__main__':
