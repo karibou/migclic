@@ -345,10 +345,6 @@ def main():
               clic.stats['existing_contacts_with_email'])
         print('Nombre de rendez-vous                       : %d' %
               clic.stats['found_agenda_entries'])
-        has_client = [clnt['email'] for clnt in clic.agenda
-                      if 'client' in clnt.keys()]
-        print('Nombre de rendez-vous google avec client lié: %d' %
-              len(has_client))
         print('Nombre de fiches clicrdv déjà existantes    : %d' %
               clic.stats['existing_fiches'])
         print('Nombre de contact trouvés dans les fiches   : %d' %
