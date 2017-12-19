@@ -147,36 +147,39 @@ class clicrdv():
                               'phoneNumbers,'
                               'memberships,'
                               'metadata'), pageSize=2000).execute()
-        contacts = contactsResult.get('connections', [])
+        google_contacts = contactsResult.get('connections', [])
 
-        if not contacts:
+        if not google_contacts:
             print('No upcoming events found.')
-        self.client = {}
-        self.client_by_email = {}
-        for contact in contacts:
+        self.contact = {}
+        self.contact_by_email = {}
+        for contact in google_contacts:
             CGroups = [c['contactGroupMembership']['contactGroupId'] for c in
                        contact['memberships']]
             if CGroupId in CGroups:
                 cname = contact['names'][0]
-                nindex = cname['displayNameLastFirst']
-                self.client[nindex] = {}
+                nindex = cname['displayNameLastFirst'].lower()
+                self.contact[nindex] = {}
                 try:
-                    self.client[nindex]['nom'] = cname['familyName']
+                    self.contact[nindex]['nom'] = cname['familyName']
                 except KeyError:
-                    self.client[nindex]['nom'] = cname['givenName']
+                    self.contact[nindex]['nom'] = cname['givenName']
                 try:
-                    self.client[nindex]['prenom'] = cname['givenName']
+                    self.contact[nindex]['prenom'] = cname['givenName']
                 except KeyError:
-                    self.client[nindex]['prenom'] = cname['displayName']
+                    self.contact[nindex]['prenom'] = cname['displayName']
                 phone = contact['phoneNumbers'][0]['canonicalForm']
                 if phone.startswith('+336') or phone.startswith('+337'):
-                    self.client[nindex]['mobile'] = phone
+                    self.contact[nindex]['mobile'] = phone
                 else:
-                    self.client[nindex]['fixe'] = phone
+                    self.contact[nindex]['fixe'] = phone
                 if 'emailAddresses' in contact.keys():
                     email = contact['emailAddresses'][0]['value']
-                    self.client[nindex]['email'] = email
-                    self.client_by_email[email] = self.client[nindex]
+                    self.contact[nindex]['email'] = email
+                    self.contact_by_email[email] = self.contact[nindex]
+
+        self.stats['existing_contacts'] = len(self.contact)
+        self.stats['existing_contacts_with_email'] = len(self.contact_by_email)
 
     def get_calendar_entries(self):
         """
@@ -211,8 +214,8 @@ class clicrdv():
                 email = ''.join([e['email'] for e in event['attendees']
                                  if e['email'] != owner])
                 self.rv['email'] = email
-                if email in self.client_by_email.keys():
-                    self.rv['client'] = self.client_by_email[email]
+                if email in self.contact_by_email.keys():
+                    self.rv['client'] = self.contact_by_email[email]
             except KeyError:
                 pass
             self.agenda += [self.rv]

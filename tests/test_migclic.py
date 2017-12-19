@@ -188,8 +188,8 @@ class MigClicTests(unittest.TestCase):
             list.return_value.execute.return_value = self.ctcresult
         clic = migclic.clicrdv('test')
         clic.get_contacts()
-        self.assertEquals(len(clic.client), 3)
-        self.assertEquals(len(clic.client_by_email), 1)
+        self.assertEquals(len(clic.contact), 3)
+        self.assertEquals(len(clic.contact_by_email), 1)
 
     @patch('migclic.discovery.build')
     @patch('migclic.get_google_credentials')
@@ -210,7 +210,7 @@ class MigClicTests(unittest.TestCase):
         has_client = [clnt['email'] for clnt in clic.agenda
                       if 'client' in clnt.keys()]
         self.assertEquals(len(clic.agenda), 2)
-        self.assertEquals(len(clic.client_by_email), 1)
+        self.assertEquals(len(clic.contact_by_email), 1)
         self.assertEquals(has_client, ['luke.skywalker@tatoine.org'])
 
     @patch('migclic.os.environ.get')
