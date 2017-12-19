@@ -191,6 +191,28 @@ class clicrdv():
         self.stats['existing_contacts'] = len(self.contact)
         self.stats['existing_contacts_with_email'] = len(self.contact_by_email)
 
+    def send_fiche_to_instance(self, fiche):
+
+        if self.ses is None:
+            print('No session opened to %s instance' % self.inst)
+            return
+
+        payload = {'fiche': fiche}
+        if self.create_new_fiche:
+            # Uncomment when ready to test with _REAL_ API
+            # resp = self.ses.post(api[self.inst]['baseurl'] +
+            #                     '/groups/' + self.group_id +
+            #                     '/fiches?apikey=' + api[self.inst]['apikey'],
+            #                     data=payload)
+            resp = self.ses.get(api[self.inst]['baseurl'] +
+                                '/groups/' + self.group_id + '/fiches.json')
+            if resp.status_code != 200:
+                print('Unable to create new fiche %d : %s - %s' %
+                      (resp.status_code, resp.reason, resp.text))
+            print('%s sent to %s' % (payload, self.inst))
+        else:
+            print(payload)
+
     def create_all_fiches(self):
         # {
         #   'fiche': {
@@ -290,6 +312,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--force', action='store_true',
                         help='Force use of the production API')
+    parser.add_argument('-C', '--Create', action='store_true',
+                        help='Force the creation of the new fiches')
     args = parser.parse_args()
     clic_instance = 'sandbox'
     auth = get_clicrdv_creds()
@@ -301,9 +325,11 @@ def main():
             return
         if ans[0].lower() == 'y' or ans[0].lower() == 'o':
             clic_instance = 'prod'
+
     api[clic_instance]['apikey'] = auth['apikey']
 
     clic = clicrdv(clic_instance)
+    clic.create_new_fiche = args.Create
     clic.get_contacts()
     clic.get_calendar_entries()
 
