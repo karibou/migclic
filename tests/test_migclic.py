@@ -300,6 +300,13 @@ class MigClicTests(unittest.TestCase):
                 'pro': {
                     'group_id': 'deadbeef',
                     },
+                'records': [{
+                    'lastname': 'skywalker',
+                    'firstname': 'luke',
+                    }]
+                }
+        one_fiche = {
+                'skywalker, luke': json_return['records'][0]
                 }
         sess.return_value.post.return_value = session
         sess.return_value.post.return_value.json.return_value = json_return
@@ -309,7 +316,7 @@ class MigClicTests(unittest.TestCase):
         clic.session_open(auth)
         clic.get_fiches()
         self.assertIsNotNone(clic.ses)
-        self.assertEquals(clic.all_fiches, json_return)
+        self.assertEquals(clic.all_fiches, one_fiche)
 
     @patch('migclic.requests.session')
     def test_get_fiches_nok(self, sess):

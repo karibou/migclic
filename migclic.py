@@ -118,7 +118,11 @@ class clicrdv():
                   (resp.status_code, resp.reason, resp.text))
             self.all_fiches = None
             return
-        self.all_fiches = resp.json()
+        for record in resp.json().get('records'):
+                index = record['lastname'].lower() + ', ' + \
+                        record['firstname'].lower()
+                self.all_fiches[index] = record
+        self.stats['existing_fiches'] = len(self.all_fiches)
         return
 
     def get_contacts(self):
