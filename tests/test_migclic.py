@@ -9,6 +9,11 @@ class MigClicTests(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.workdir = tempfile.mkdtemp()
+        self.auth = {
+                'user': 'darth',
+                'pwd': 'vader',
+                'apikey': 'deathstar',
+                }
         self.cgresult = {
             'contactGroups': [{
                 'resourceName': 'contactGroups/deadbeef',
@@ -251,14 +256,9 @@ class MigClicTests(unittest.TestCase):
         session.status_code = 404
         session.reason = 'Not found'
         session.text = '404 - Not Found'
-        auth = {
-                'user': 'darth',
-                'pwd': 'vader',
-                'apikey': 'deathstar',
-                }
         sess.return_value.post.return_value = session
         clic = migclic.clicrdv('prod')
-        clic.session_open(auth)
+        clic.session_open(self.auth)
         self.assertIsNone(clic.ses)
         self.assertIsNone(clic.group_id)
 
@@ -270,11 +270,6 @@ class MigClicTests(unittest.TestCase):
 
         session = MagicMock()
         session.status_code = 200
-        auth = {
-                'user': 'darth',
-                'pwd': 'vader',
-                'apikey': 'deathstar',
-                }
         json_return = {
                 'pro': {
                     'group_id': 'deadbeef',
@@ -283,7 +278,7 @@ class MigClicTests(unittest.TestCase):
         sess.return_value.post.return_value = session
         sess.return_value.post.return_value.json.return_value = json_return
         clic = migclic.clicrdv('prod')
-        clic.session_open(auth)
+        clic.session_open(self.auth)
         self.assertIsNotNone(clic.ses)
         self.assertEquals(clic.group_id, 'deadbeef')
 
@@ -295,11 +290,6 @@ class MigClicTests(unittest.TestCase):
 
         session = MagicMock()
         session.status_code = 200
-        auth = {
-                'user': 'darth',
-                'pwd': 'vader',
-                'apikey': 'deathstar',
-                }
         json_return = {
                 'pro': {
                     'group_id': 'deadbeef',
@@ -317,7 +307,7 @@ class MigClicTests(unittest.TestCase):
         sess.return_value.get.return_value = session
         sess.return_value.get.return_value.json.return_value = json_return
         clic = migclic.clicrdv('prod')
-        clic.session_open(auth)
+        clic.session_open(self.auth)
         clic.get_fiches()
         self.assertIsNotNone(clic.ses)
         self.assertEquals(clic.all_fiches, one_fiche)
@@ -330,11 +320,6 @@ class MigClicTests(unittest.TestCase):
 
         session = MagicMock()
         session.status_code = 200
-        auth = {
-                'user': 'darth',
-                'pwd': 'vader',
-                'apikey': 'deathstar',
-                }
         json_return = {
                 'pro': {
                     'group_id': 'deadbeef',
@@ -345,7 +330,7 @@ class MigClicTests(unittest.TestCase):
         sess.return_value.get.return_value = session
         sess.return_value.get.return_value.json.return_value = json_return
         clic = migclic.clicrdv('prod')
-        clic.session_open(auth)
+        clic.session_open(self.auth)
         session.status_code = 404
         clic.get_fiches()
         self.assertIsNotNone(clic.ses)
