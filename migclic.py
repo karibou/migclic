@@ -7,6 +7,7 @@ import requests
 import hashlib
 import getpass
 import argparse
+import json
 
 from apiclient import discovery
 from oauth2client import client
@@ -35,6 +36,17 @@ api = {
             'apikey': '',
             },
         }
+
+clicfields = {
+        'prenom': 'firstname',
+        'nom': 'lastname',
+        'email': 'email',
+        'mobile': 'firstphone',
+        'fixe': 'secondphone',
+        'pere': 'num0',
+        'mere': 'str0',
+        'comm': 'comments',
+    }
 
 
 def get_google_credentials(target):
@@ -80,6 +92,43 @@ def get_clicrdv_creds():
     if not apikey:
         apikey = input('API Key: ')
     return {'user': username, 'pwd': hashpwd, 'apikey': apikey}
+
+
+def _get_phone_numbers(phonenum):
+    nums = {
+            'fixe': '',
+            'mobile': '',
+            'pere': '',
+            'mere': '',
+            'comm': '',
+            }
+    for fone in phonenum:
+        if fone.get('metadata').get('primary'):
+            if fone.get('type') == 'mobile':
+                nums['mobile'] = fone.get('value')
+            elif fone.get('type') == 'home':
+                nums['fixe'] = fone.get('value')
+            else:
+                nums['comm'] = fone.get('value') + '(' + fone.get('type') + ')'
+        else:
+            if fone.get('type') == 'mobile':
+                nums['mobile'] = fone.get('value')
+            elif fone.get('type') == 'home':
+                nums['fixe'] = fone.get('value')
+            elif (fone.get('type').lower() == 'père' or
+                  fone.get('type').lower() == 'pere'):
+                nums['pere'] = fone.get('value')
+            elif (fone.get('type').lower() == 'mère' or
+                  fone.get('type').lower() == 'mere'):
+                nums['mere'] = fone.get('value')
+            else:
+                if nums['comm'] != '':
+                    nums['comm'] = nums['comm'] + '\n' + fone.get('value') +\
+                                   '(' + fone.get('type') + ')'
+                else:
+                    nums['comm'] = fone.get('value') +\
+                                   '(' + fone.get('type') + ')'
+    return nums
 
 
 class clicrdv():
@@ -131,16 +180,19 @@ class clicrdv():
     def get_fiches(self):
 
         resp = self.ses.get(api[self.inst]['baseurl'] +
-                            '/groups/' + self.group_id + '/fiches.json')
+                            '/groups/' + self.group_id +
+                            '/fiches.json?results=all')
         if resp.status_code != 200:
             print('Unable to get all fiches %d : %s - %s' %
                   (resp.status_code, resp.reason, resp.text))
             self.all_fiches = None
             return
         for record in resp.json().get('records'):
-                index = record['lastname'].lower() + ', ' + \
-                        record['firstname'].lower()
-                self.all_fiches[index] = record
+            if record['lastname'].startswith('$'):
+                continue
+            index = record['lastname'].lower() + ', ' +\
+                record['firstname'].lower()
+            self.all_fiches[index] = record
         self.stats['existing_fiches'] = len(self.all_fiches)
         return
 
@@ -187,15 +239,16 @@ class clicrdv():
                     self.contact[nindex]['prenom'] = cname['givenName']
                 except KeyError:
                     self.contact[nindex]['prenom'] = cname['displayName']
-                phone = contact['phoneNumbers'][0]['canonicalForm']
-                if phone.startswith('+336') or phone.startswith('+337'):
-                    self.contact[nindex]['mobile'] = phone
-                else:
-                    self.contact[nindex]['fixe'] = phone
+                phones = _get_phone_numbers(contact['phoneNumbers'])
+                for phone_type, number in phones.items():
+                    self.contact[nindex][phone_type] = number
+
                 if 'emailAddresses' in contact.keys():
                     email = contact['emailAddresses'][0]['value']
                     self.contact[nindex]['email'] = email
                     self.contact_by_email[email] = self.contact[nindex]
+                else:
+                    self.contact[nindex]['email'] = ''
 
         self.stats['existing_contacts'] = len(self.contact)
         self.stats['existing_contacts_with_email'] = len(self.contact_by_email)
@@ -206,30 +259,36 @@ class clicrdv():
             print('No session opened to %s instance' % self.inst)
             return
 
-        payload = {'fiche': fiche}
+        # payload format must be json
+        payload = json.dumps({'fiche': fiche})
         if self.create_new_fiche:
             # Uncomment when ready to test with _REAL_ API
-            # resp = self.ses.post(api[self.inst]['baseurl'] +
-            #                     '/groups/' + self.group_id +
-            #                     '/fiches?apikey=' + api[self.inst]['apikey'],
-            #                     data=payload)
-            resp = self.ses.get(api[self.inst]['baseurl'] +
-                                '/groups/' + self.group_id + '/fiches.json')
+            resp = self.ses.post(api[self.inst]['baseurl'] +
+                                 '/groups/' + self.group_id +
+                                 '/fiches?apikey=' + api[self.inst]['apikey'],
+                                 headers={'Content-Type': 'application/json'},
+                                 data=payload)
             if resp.status_code != 200:
                 print('Unable to create new fiche %d : %s - %s' %
                       (resp.status_code, resp.reason, resp.text))
-            print('%s sent to %s' % (payload, self.inst))
+            print('%s, %s sent to %s' % (fiche['lastname'], fiche['firstname'],
+                  self.inst))
         else:
-            print(payload)
+            print('%s, %s NOT SENT to %s' % (fiche['lastname'],
+                                             fiche['firstname'], self.inst))
 
     def create_all_fiches(self):
         # {
         #   'fiche': {
         #     'group_id':
-        #     'firstname':
-        #     'lastname':
-        #     'firstphone':
-        #     'email':
+        #     'firstname':   (Prénom)
+        #     'lastname':    (Nom)
+        #     'email':       (Email)
+        #     'firstphone':  (Mobile)
+        #     'secondphone': (Tél. fixe)
+        #     'num0':        (Père)
+        #     'str0':        (Mère)
+        #     'comments':    (Info fiche client)
         #     'from_web': False
         #     }
         # }
@@ -240,38 +299,15 @@ class clicrdv():
                 continue
             new_fiche = {
                          'group_id': self.group_id,
-                         'firstname': contact['prenom'],
-                         'lastname': contact['nom'],
-                         'from_web': False,
                         }
-            try:
-                new_fiche.update({
-                             'firstphone': contact['mobile'],
-                             'email': contact['email'],
-                            })
-            except KeyError:
-                if 'email' not in contact.keys():
-                    new_fiche.update({
-                                 'email': '',
-                                })
-                else:
-                    new_fiche.update({
-                                 'email': contact['email'],
-                                })
 
-                if 'mobile' not in contact.keys():
-                    new_fiche.update({
-                                 'firstphone': contact['fixe'],
-                                })
-                else:
-                    new_fiche.update({
-                                 'firstphone': contact['mobile'],
-                                })
+            for contact_fld, fiche_fld in clicfields.items():
+                new_fiche[fiche_fld] = contact[contact_fld]
 
-            self.send_fiche_to_instance(new_fiche)
             self.all_fiches[contact['nom'].lower() + ', ' +
                             contact['prenom'].lower()] = new_fiche
             self.stats['newly_created_fiches'] += 1
+            self.send_fiche_to_instance(new_fiche)
         self.stats['all_fiches'] = len(self.all_fiches)
 
     def get_calendar_entries(self):
