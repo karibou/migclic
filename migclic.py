@@ -7,6 +7,7 @@ import requests
 import hashlib
 import getpass
 import argparse
+import json
 
 from apiclient import discovery
 from oauth2client import client
@@ -258,21 +259,23 @@ class clicrdv():
             print('No session opened to %s instance' % self.inst)
             return
 
-        payload = {'fiche': fiche}
+        # payload format must be json
+        payload = json.dumps({'fiche': fiche})
         if self.create_new_fiche:
             # Uncomment when ready to test with _REAL_ API
-            # resp = self.ses.post(api[self.inst]['baseurl'] +
-            #                     '/groups/' + self.group_id +
-            #                     '/fiches?apikey=' + api[self.inst]['apikey'],
-            #                     data=payload)
-            resp = self.ses.get(api[self.inst]['baseurl'] +
-                                '/groups/' + self.group_id + '/fiches.json')
+            resp = self.ses.post(api[self.inst]['baseurl'] +
+                                 '/groups/' + self.group_id +
+                                 '/fiches?apikey=' + api[self.inst]['apikey'],
+                                 headers={'Content-Type': 'application/json'},
+                                 data=payload)
             if resp.status_code != 200:
                 print('Unable to create new fiche %d : %s - %s' %
                       (resp.status_code, resp.reason, resp.text))
-            print('%s sent to %s' % (payload, self.inst))
+            print('%s, %s sent to %s' % (fiche['lastname'], fiche['firstname'],
+                  self.inst))
         else:
-            print(payload)
+            print('%s, %s NOT SENT to %s' % (fiche['lastname'],
+                                             fiche['firstname'], self.inst))
 
     def create_all_fiches(self):
         # {
@@ -304,6 +307,7 @@ class clicrdv():
             self.all_fiches[contact['nom'].lower() + ', ' +
                             contact['prenom'].lower()] = new_fiche
             self.stats['newly_created_fiches'] += 1
+            self.send_fiche_to_instance(new_fiche)
         self.stats['all_fiches'] = len(self.all_fiches)
 
     def get_calendar_entries(self):
