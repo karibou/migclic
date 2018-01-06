@@ -36,6 +36,17 @@ api = {
             },
         }
 
+clicfields = {
+        'prenom': 'firstname',
+        'nom': 'lastname',
+        'email': 'email',
+        'mobile': 'firstphone',
+        'fixe': 'secondphone',
+        'pere': 'num0',
+        'mere': 'str0',
+        'comm': 'comments',
+    }
+
 
 def get_google_credentials(target):
     """Gets valid user credentials from storage.
@@ -226,10 +237,14 @@ class clicrdv():
         # {
         #   'fiche': {
         #     'group_id':
-        #     'firstname':
-        #     'lastname':
-        #     'firstphone':
-        #     'email':
+        #     'firstname':   (Prénom)
+        #     'lastname':    (Nom)
+        #     'email':       (Email)
+        #     'firstphone':  (Mobile)
+        #     'secondphone': (Tél. fixe)
+        #     'num0':        (Père)
+        #     'str0':        (Mère)
+        #     'comments':    (Info fiche client)
         #     'from_web': False
         #     }
         # }
@@ -240,35 +255,11 @@ class clicrdv():
                 continue
             new_fiche = {
                          'group_id': self.group_id,
-                         'firstname': contact['prenom'],
-                         'lastname': contact['nom'],
-                         'from_web': False,
                         }
-            try:
-                new_fiche.update({
-                             'firstphone': contact['mobile'],
-                             'email': contact['email'],
-                            })
-            except KeyError:
-                if 'email' not in contact.keys():
-                    new_fiche.update({
-                                 'email': '',
-                                })
-                else:
-                    new_fiche.update({
-                                 'email': contact['email'],
-                                })
 
-                if 'mobile' not in contact.keys():
-                    new_fiche.update({
-                                 'firstphone': contact['fixe'],
-                                })
-                else:
-                    new_fiche.update({
-                                 'firstphone': contact['mobile'],
-                                })
+            for contact_fld, fiche_fld in clicfields.items():
+                new_fiche[fiche_fld] = contact[contact_fld]
 
-            self.send_fiche_to_instance(new_fiche)
             self.all_fiches[contact['nom'].lower() + ', ' +
                             contact['prenom'].lower()] = new_fiche
             self.stats['newly_created_fiches'] += 1
