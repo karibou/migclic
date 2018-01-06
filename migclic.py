@@ -93,6 +93,43 @@ def get_clicrdv_creds():
     return {'user': username, 'pwd': hashpwd, 'apikey': apikey}
 
 
+def _get_phone_numbers(phonenum):
+    nums = {
+            'fixe': '',
+            'mobile': '',
+            'pere': '',
+            'mere': '',
+            'comm': '',
+            }
+    for fone in phonenum:
+        if fone.get('metadata').get('primary'):
+            if fone.get('type') == 'mobile':
+                nums['mobile'] = fone.get('value')
+            elif fone.get('type') == 'home':
+                nums['fixe'] = fone.get('value')
+            else:
+                nums['comm'] = fone.get('value') + '(' + fone.get('type') + ')'
+        else:
+            if fone.get('type') == 'mobile':
+                nums['mobile'] = fone.get('value')
+            elif fone.get('type') == 'home':
+                nums['fixe'] = fone.get('value')
+            elif (fone.get('type').lower() == 'père' or
+                  fone.get('type').lower() == 'pere'):
+                nums['pere'] = fone.get('value')
+            elif (fone.get('type').lower() == 'mère' or
+                  fone.get('type').lower() == 'mere'):
+                nums['mere'] = fone.get('value')
+            else:
+                if nums['comm'] != '':
+                    nums['comm'] = nums['comm'] + '\n' + fone.get('value') +\
+                                   '(' + fone.get('type') + ')'
+                else:
+                    nums['comm'] = fone.get('value') +\
+                                   '(' + fone.get('type') + ')'
+    return nums
+
+
 class clicrdv():
     def __init__(self, inst):
         self.ses = None
@@ -198,11 +235,10 @@ class clicrdv():
                     self.contact[nindex]['prenom'] = cname['givenName']
                 except KeyError:
                     self.contact[nindex]['prenom'] = cname['displayName']
-                phone = contact['phoneNumbers'][0]['canonicalForm']
-                if phone.startswith('+336') or phone.startswith('+337'):
-                    self.contact[nindex]['mobile'] = phone
-                else:
-                    self.contact[nindex]['fixe'] = phone
+                phones = _get_phone_numbers(contact['phoneNumbers'])
+                for phone_type, number in phones.items():
+                    self.contact[nindex][phone_type] = number
+
                 if 'emailAddresses' in contact.keys():
                     email = contact['emailAddresses'][0]['value']
                     self.contact[nindex]['email'] = email
