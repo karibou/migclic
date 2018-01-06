@@ -187,9 +187,11 @@ class clicrdv():
             self.all_fiches = None
             return
         for record in resp.json().get('records'):
-                index = record['lastname'].lower() + ', ' + \
-                        record['firstname'].lower()
-                self.all_fiches[index] = record
+            if record['lastname'].startswith('$'):
+                continue
+            index = record['lastname'].lower() + ', ' +\
+                record['firstname'].lower()
+            self.all_fiches[index] = record
         self.stats['existing_fiches'] = len(self.all_fiches)
         return
 
