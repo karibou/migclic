@@ -243,6 +243,8 @@ class clicrdv():
                     email = contact['emailAddresses'][0]['value']
                     self.contact[nindex]['email'] = email
                     self.contact_by_email[email] = self.contact[nindex]
+                else:
+                    self.contact[nindex]['email'] = ''
 
         self.stats['existing_contacts'] = len(self.contact)
         self.stats['existing_contacts_with_email'] = len(self.contact_by_email)
