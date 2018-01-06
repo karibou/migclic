@@ -136,6 +136,7 @@ class clicrdv():
         self.ses = None
         self.inst = inst
         self.all_fiches = {}
+        self.all_fiches_by_email = {}
         self.stats = {
                 'existing_contacts': 0,
                 'existing_contacts_with_email': 0,
@@ -151,6 +152,8 @@ class clicrdv():
 
         if contact['nom'].lower() + ', ' + \
            contact['prenom'].lower() in self.all_fiches.keys():
+            return True
+        elif contact['email'] in self.all_fiches_by_email.keys():
             return True
         else:
             return False
@@ -193,6 +196,8 @@ class clicrdv():
             index = record['lastname'].lower() + ', ' +\
                 record['firstname'].lower()
             self.all_fiches[index] = record
+            if record['email'] != '':
+                self.all_fiches_by_email[record['email']] = record
         self.stats['existing_fiches'] = len(self.all_fiches)
         return
 
