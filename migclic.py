@@ -270,10 +270,11 @@ class clicrdv():
             # Uncomment when ready to test with _REAL_ API
             resp = self.ses.post(api[self.inst]['baseurl'] +
                                  '/groups/' + self.group_id +
-                                 '/fiches?apikey=' + api[self.inst]['apikey'],
+                                 '/fiches.json?apikey=' +
+                                 api[self.inst]['apikey'],
                                  headers={'Content-Type': 'application/json'},
                                  data=payload)
-            if resp.status_code != 200:
+            if resp.status_code != 200 and resp.status_code != 201:
                 print('Unable to create new fiche %d : %s - %s' %
                       (resp.status_code, resp.reason, resp.text))
             print('%s, %s sent to %s' % (fiche['lastname'], fiche['firstname'],
