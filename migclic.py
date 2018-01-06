@@ -179,7 +179,8 @@ class clicrdv():
     def get_fiches(self):
 
         resp = self.ses.get(api[self.inst]['baseurl'] +
-                            '/groups/' + self.group_id + '/fiches.json')
+                            '/groups/' + self.group_id +
+                            '/fiches.json?results=all')
         if resp.status_code != 200:
             print('Unable to get all fiches %d : %s - %s' %
                   (resp.status_code, resp.reason, resp.text))
