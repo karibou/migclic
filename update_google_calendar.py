@@ -173,7 +173,7 @@ class clicrdv():
         event['summary'] = 'ClicRDV (Privé)'
         event['start'] = {'dateTime': start, 'timeZone': self.tz}
         event['end'] = {'dateTime': end, 'timeZone': self.tz}
-        event['reminders']: {'useDefault': False, }
+        event['reminders'] = {'useDefault': False, }
         return event
 
     def _add_google_entry(self, entry):
