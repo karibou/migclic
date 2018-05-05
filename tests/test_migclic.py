@@ -3,7 +3,7 @@ import migclic
 import tempfile
 import shutil
 import argparse
-from unittest.mock import patch, MagicMock
+from mock import patch, MagicMock
 
 
 class MigClicTests(unittest.TestCase):
@@ -292,6 +292,7 @@ class MigClicTests(unittest.TestCase):
         clic.session_open(self.auth)
         self.assertIsNotNone(clic.ses)
         self.assertEquals(clic.group_id, 'deadbeef')
+        return clic
 
     @patch('migclic.requests.session')
     def test_get_fiches(self, sess):
@@ -410,6 +411,7 @@ class MigClicTests(unittest.TestCase):
         self.assertEquals(new_fiche['firstphone'], '06 01 01 01 01')
         self.assertEquals(new_fiche['email'], 'luke.skywalker@tatooine.org')
         self.assertFalse(new_fiche['from_web'])
+        return clic
 
     @patch('migclic.clicrdv.send_fiche_to_instance')
     def test_create_all_fiches_new_fiche_no_email(self, send_fiche):
@@ -463,6 +465,20 @@ class MigClicTests(unittest.TestCase):
         self.assertEquals(new_fiche['firstphone'], '01 01 01 01 01')
         self.assertEquals(new_fiche['email'], 'luke.skywalker@tatooine.org')
         self.assertFalse(new_fiche['from_web'])
+
+    def test_send_fiche_to_instance_no_create(self):
+
+        clic = self.test_create_all_fiches_new_fiche_with_all_fields()
+        fiche_to_send = clic.all_fiches['skywalker, luke']
+        import pdb
+        pdb.set_trace()
+        new_session = self.test_session_open_resp_ok()
+        with patch('migclic.requests.session') as sess:
+            sess_get = MagicMock()
+            sess_get.status_code = 200
+            sess.return_value.get.return_value = sess_get
+            new_session.create_new_fiche = True
+            new_session.send_fiche_to_instance(fiche_to_send)
 
     @patch('migclic.clicrdv.create_all_fiches')
     @patch('migclic.clicrdv.get_fiches')
