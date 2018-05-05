@@ -40,7 +40,7 @@ def get_google_credentials(target):
     Returns:
         Credentials, the obtained credential.
     """
-    home_dir = os.path.expanduser('.')
+    home_dir = '/home/caribou/git/migclic'
     credential_dir = os.path.join(home_dir, '.credentials')
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
