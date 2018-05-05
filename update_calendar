@@ -1,0 +1,6 @@
+#!/bin/bash
+
+. /home/caribou/git/migclic/setvar
+
+echo "###### $(date) ######" >> /home/caribou/git/migclic/update_calendar.log
+/home/caribou/git/migclic/update_google_calendar.py -C >> /home/caribou/git/migclic/update_calendar.log
