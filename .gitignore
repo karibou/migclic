@@ -1,3 +1,5 @@
+setvar
+*log
 *.json
 .coverage
 .credentials/
