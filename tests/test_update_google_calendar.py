@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import unittest
 import update_google_calendar
 import tempfile
