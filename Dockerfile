@@ -1,10 +1,10 @@
-FROM ubuntu:xenial
+FROM ubuntu:jammy
 
 RUN apt-get update
 
 RUN apt install -y python3 python3-requests python3-pip git locales
 
-RUN pip3 install google-api-python-client
+RUN pip3 install google-api-python-client oauth2client
 
 RUN mkdir .credentials
 
