@@ -143,7 +143,7 @@ class clicrdv():
         as of today.
         """
 
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        now = datetime.datetime.now().isoformat() + 'Z'
         eventsResult = self.service.events().list(
             calendarId=self.google_calendar_id, timeMin=now,
             singleEvents=False, maxResults=2400).execute()
